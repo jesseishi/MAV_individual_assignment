@@ -14,14 +14,11 @@ dbscan_params = {"eps": 10, "min_samples": 10}
 test_gate_detector_params = {"max_total_error": 50}
 
 # Load an image and its coordinates.
-im_name = 'img_116.png'
+im_name = 'img_10.png'
 data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace'))
 im = cv2.imread(os.path.join(data_folder, im_name), 0)
-df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'), names=["im_name",
-                                                                         "tl_x", "tl_y",
-                                                                         "tr_x", "tr_y",
-                                                                         "br_x", "br_y",
-                                                                         "bl_x", "bl_y"])
+df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
+                        names=["im_name", "tl_x", "tl_y", "tr_x", "tr_y", "br_x", "br_y", "bl_x", "bl_y"])
 
 # Detect a gate.
 gate_detector = GateDetector(orb_params, dbscan_params)
@@ -59,6 +56,6 @@ for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
 
     plt.plot(real_coords[:, 0], real_coords[:, 1], 'X', markersize=10, label="total error: {}".format(error))
 
-plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='green' if found_true_positive else 'red', markersize=10)
+plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='green' if found_true_positive else 'red', markersize=20)
 plt.legend()
 plt.show()
