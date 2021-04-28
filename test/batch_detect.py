@@ -16,7 +16,7 @@ data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace
 df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
                         names=["im_name", "tl_x", "tl_y", "tr_x", "tr_y", "br_x", "br_y", "bl_x", "bl_y"])
 
-results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "tp", "fp", "tn", "fn"])
+results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "total_gates", "tp", "fp", "tn", "fn"])
 run_i = 0
 max_images = 100
 for eps in range(8, 21, 2):
@@ -33,10 +33,12 @@ for eps in range(8, 21, 2):
         test_gate_detector = TestGateDetector(**test_gate_detector_params)
 
         # Reset the total amount of true positives and false positives for this run.
+        # TODO: distinguish between total tp, fp, tn, and fn for the batch and one image.
         tp = 0
         fp = 0
         tn = 0
         fn = 0
+        total_gates = 0
 
         # Loop through all the images.
         # Some images have multiple gates, in which case it has multiple rows. So we loop through the unique image
@@ -57,7 +59,10 @@ for eps in range(8, 21, 2):
                 # Loop through the possible gates and see if we detected one correctly.
                 # TODO: this assumes that the algorithm can only detect one gate.
                 found_true_positive = False
+                n_gates_in_this_image = 0  # This will be iterated on.
                 for _, row in df_coords[df_coords["im_name"] == im_name].iterrows():
+                    n_gates_in_this_image += 1
+                    total_gates += 1
 
                     # Get the coordinates of this gate.
                     real_coords = np.array([[row["tl_x"], row["tl_y"]],
@@ -75,8 +80,14 @@ for eps in range(8, 21, 2):
                 # If we found a true positive increase the counter.
                 if found_true_positive:
                     tp += 1
+                    fn += n_gates_in_this_image - 1
                 else:
                     fp += 1
+                    fn += n_gates_in_this_image
+
+                # We assume there are always 3 potential gates in the image, since we can only detect 1 at most, the
+                # rest will be true negatives.
+                tn += 3 - n_gates_in_this_image
 
                 result_set_params_dict[im_name] = found_true_positive
 
@@ -87,7 +98,7 @@ for eps in range(8, 21, 2):
                 fp += 1
             finally:
 
-                if i > max_images:
+                if i == max_images - 1:
                     break
 
         # Save the results of this run.
@@ -95,7 +106,9 @@ for eps in range(8, 21, 2):
         results_run.to_csv(os.path.join('../', 'results', 'eps{}-min_samples{}.csv'.format(eps, min_samples)))
 
         # Store the results of this run.
-        results_batch = results_batch.append({"eps": eps, "min_samples": min_samples, "n_images": i, "tp": tp, "fp": fp},
+        results_batch = results_batch.append({"eps": eps, "min_samples": min_samples, "n_images": i+1,
+                                              "total_gates": total_gates,
+                                              "tp": tp, "fp": fp, "tn": tn, "fn": fn},
                                              ignore_index=True)
         run_i += 1
 
