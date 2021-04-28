@@ -85,28 +85,3 @@ class GateDetector:
         # The score is the inverse of the standard deviation of the lowest four lengths.
         lengths_between_vertices.sort()
         return 1 / np.std(lengths_between_vertices[:4])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
