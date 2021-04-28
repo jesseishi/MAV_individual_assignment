@@ -35,7 +35,7 @@ X = np.array([[*kp.pt] for kp in kps])
 # Define the model - DBSCAN.
 # X, _ = make_classification(n_samples=1000, n_features=2, n_informative=2, n_redundant=0, n_clusters_per_class=1, random_state=4)
 model = DBSCAN(eps=10, min_samples=10)
-yhat = model.fit_predict(X)
+y_hat = model.fit_predict(X)
 
 
 # Get the centroids of all clusters.
@@ -44,10 +44,10 @@ def get_cluster_centroid(i, yhat, X):
     return np.average(X[row_i, 0]), np.average(X[row_i, 1])
 
 
-clusters = np.unique(yhat)
+clusters = np.unique(y_hat)
 clusters_coordinates = np.zeros((len(clusters), 2))
 for cluster in clusters:
-    clusters_coordinates[cluster, :] = get_cluster_centroid(cluster, yhat, X)
+    clusters_coordinates[cluster, :] = get_cluster_centroid(cluster, y_hat, X)
 
 
 # Does a set of 4 coordinates form a nice rectangle?
@@ -79,7 +79,7 @@ plt.imshow(img2)
 # Create scatter plot for samples from each cluster.
 for cluster in clusters:
     # get row indexes for samples with this cluster
-    row_ix = np.where(yhat == cluster)
+    row_ix = np.where(y_hat == cluster)
 
     # Create scatter of these samples
     plt.scatter(X[row_ix, 0], X[row_ix, 1])
