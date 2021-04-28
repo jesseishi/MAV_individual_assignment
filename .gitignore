@@ -1,2 +1,6 @@
 # IDE stuff.
 .idea/
+
+# Python cache.
+*.pyc
+__pycache__/
