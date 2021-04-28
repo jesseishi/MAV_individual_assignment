@@ -16,4 +16,16 @@ batch_df["fp_f"] = batch_df["fp"] / batch_df["n_images"]
 
 # Check the best combination of eps and min samples.
 heat_df = batch_df.pivot('eps', 'min_samples', 'tp_f')
-sns.heatmap(heat_df, annot=True, cmap="YlGnBu")
+sns.heatmap(heat_df, annot=True, cmap="coolwarm", vmin=0, vmax=1)
+# Nice cmpashttps://matplotlib.org/stable/tutorials/colors/colormaps.html: viridis, coolwarm,
+
+# Fix eps and min_samples separately and make the ROC curve.
+eps_fix = 12
+min_samples_fix = 17
+
+eps_fixed_df = batch_df[batch_df['eps'] == eps_fix]
+plt.figure()
+plt.plot(eps_fixed_df['fp_f'], eps_fixed_df['tp_f'], 'x')
+plt.xlabel('1 - specificity')
+plt.ylabel('Sensitivity')
+plt.show()
