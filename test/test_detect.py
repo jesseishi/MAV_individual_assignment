@@ -9,12 +9,12 @@ import numpy as np
 
 
 # Define parameters.
-orb_params = {}
-dbscan_params = {"eps": 10, "min_samples": 10}
+orb_params = {"edgeThreshold": 0}
+dbscan_params = {"eps": 13, "min_samples": 17}
 test_gate_detector_params = {"max_total_error": 50}
 
 # Load an image and its coordinates.
-im_name = 'img_10.png'
+im_name = 'img_194.png'
 data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace'))
 im = cv2.imread(os.path.join(data_folder, im_name), 0)
 df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
