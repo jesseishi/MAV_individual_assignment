@@ -14,7 +14,7 @@ dbscan_params = {"eps": 10, "min_samples": 10}
 test_gate_detector_params = {"max_total_error": 50}
 
 # Load an image and its coordinates.
-im_name = 'img_139.png'
+im_name = 'img_116.png'
 data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace'))
 im = cv2.imread(os.path.join(data_folder, im_name), 0)
 df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'), names=["im_name",
@@ -27,9 +27,21 @@ df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'), names=["im_nam
 gate_detector = GateDetector(orb_params, dbscan_params)
 detect_coords = gate_detector.detect_gate(im)
 
-# Check if it is good and plot the real coordinates.
+# Start the plot.
 plt.figure()
+plt.imshow(im, 'gray')
 
+# Plot the clusters.
+for cluster in np.unique(gate_detector.y_hat):
+
+    # get row indexes for samples with this cluster
+    row_ix = np.where(gate_detector.y_hat == cluster)
+
+    # Create scatter of these samples
+    plt.scatter(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1])
+
+
+# Check if it is good and plot the real coordinates.
 test_gate_detector = TestGateDetector(**test_gate_detector_params)
 found_true_positive = False
 for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
@@ -47,7 +59,6 @@ for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
 
     plt.plot(real_coords[:, 0], real_coords[:, 1], 'X', markersize=10, label="total error: {}".format(error))
 
-plt.imshow(im, 'gray')
 plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='green' if found_true_positive else 'red', markersize=10)
 plt.legend()
 plt.show()
