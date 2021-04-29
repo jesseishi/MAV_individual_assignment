@@ -71,7 +71,7 @@ for eps in range(8, 21, 2):
                                             [row["bl_x"], row["bl_y"]]])
 
                     # Check if it is a true positive.
-                    found_true_positive = test_gate_detector.is_true_positive(detect_coords, real_coords)
+                    found_true_positive = test_gate_detector.check_coordinates(detect_coords, real_coords)
 
                     # If we found a true positive, we don't need to check the other gates anymore.
                     if found_true_positive:

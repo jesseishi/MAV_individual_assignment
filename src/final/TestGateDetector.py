@@ -2,35 +2,25 @@
 import numpy as np
 
 
-# This class takes the output from the GateDetector and compares it to the true coordinates of the corners.
+# This class takes a GateDetector and compares its output to the true coordinates of the corners and mask.
 # So we can check if it detected it correctly.
 class TestGateDetector:
-    def __init__(self, max_total_error):
-        self.max_total_error = max_total_error
+    def __init__(self, max_coordinate_error):
+        self.max_coordinate_error = max_coordinate_error
 
-    # TODO: how is a TP defined.
-    def is_true_positive(self, detect_coords, real_coords, return_error=False):
+    def check_coordinates(self, detect_coords, real_coords, return_error=False):
 
-        # total_error = 0
+        # All coordinates are sorted starting in the top left and then going clockwise.
+        # So we can simply loop through them and add all the errors.
+        total_error = 0
+        for a, b in zip(detect_coords, real_coords):
+            total_error += np.linalg.norm(b - a)
 
-        # Assume that all coordinates are sorted from top left and then clockwise.
-        # TODO: Make it such that the order doesn't matter. By sorting the x coordinates and then the y coordinates and
-        #  then taking the norm.
-        real_xs = real_coords[:, 0].copy()
-        real_ys = real_coords[:, 1].copy()
-        detect_xs = detect_coords[:, 0].copy()
-        detect_yx = detect_coords[:, 1].copy()
-
-        real_xs.sort()
-        real_ys.sort()
-        detect_xs.sort()
-        detect_yx.sort()
-
-        total_error = np.linalg.norm(real_xs - detect_xs) + np.linalg.norm(real_ys - detect_yx)
-        # for detect_xy, real_xy in zip(detect_coords, real_coords):
-        #     total_error += np.linalg.norm(real_xy - detect_xy)
+        # If the total error is below a certain threshold we count is as a good detection.
+        # Note that this is different from a true positive as this is not a binary classification task.
+        is_good_detection = total_error < self.max_coordinate_error
 
         if return_error:
-            return total_error < self.max_total_error, total_error
+            return is_good_detection, total_error
         else:
-            return total_error < self.max_total_error
+            return is_good_detection

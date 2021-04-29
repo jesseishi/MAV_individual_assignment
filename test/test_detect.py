@@ -11,7 +11,7 @@ import numpy as np
 # Define parameters.
 orb_params = {"edgeThreshold": 0}
 dbscan_params = {"eps": 13, "min_samples": 17}
-test_gate_detector_params = {"max_total_error": 50}
+test_gate_detector_params = {"max_coordinate_error": 100}
 
 # Load an image and its coordinates.
 im_number = 184
@@ -53,7 +53,7 @@ for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
                             [row["bl_x"], row["bl_y"]]])
 
     # Check if it is a true positive.
-    is_true_positive, error = test_gate_detector.is_true_positive(detect_coords, real_coords, return_error=True)
+    is_true_positive, error = test_gate_detector.check_coordinates(detect_coords, real_coords, return_error=True)
     if is_true_positive:
         found_true_positive = True
 
