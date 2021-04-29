@@ -23,18 +23,18 @@ results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates
                                       "masks_flat", "masks_hat_flat"])
 
 
-# For more accurate timing of the gate detector we can incease this number so it runs it multiple times on the same
+# For more accurate timing of the gate detector we can increase this number so it runs it multiple times on the same
 # image.
 n_repeat_detections = 0
 
 # Select which images we want to look at.
-max_images = 2
+max_images = 50
 unique_image_names = np.unique(df_coords["im_name"])[:max_images]
 
 # Loop through different settings.
 run_i = 0
-for eps in range(8, 21, 10):
-    for min_samples in range(10, 21, 10):
+for eps in range(8, 21, 3):
+    for min_samples in range(10, 21, 3):
         print('run #{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
 
         # Define parameters and set up the gate detector and gate detector tester.
@@ -110,9 +110,9 @@ for eps in range(8, 21, 10):
                                               "n_images": results_im["n_image"].sum(),
                                               "total_gates": results_im["n_gates"].sum(),
                                               "total_computation_time": results_im["computation_time"].sum(),
-                                              "total_good_detection": results_im["computation_time"].sum(),
+                                              "total_good_detection": results_im["good_detection"].sum(),
                                               "ave_computation_time": results_im["computation_time"].mean(),
-                                              "ave_good_detection": results_im["computation_time"].mean(),
+                                              "ave_good_detection": results_im["good_detection"].mean(),
                                               "masks_flat": None,
                                               "masks_hat_flat": None},
                                              ignore_index=True)

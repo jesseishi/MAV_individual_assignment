@@ -10,22 +10,15 @@ import seaborn as sns
 results_folder = os.path.abspath(os.path.join(os.curdir, '..', 'results'))
 batch_df = pd.read_csv(os.path.join(results_folder, 'batch.csv'), index_col=0)
 
-# Make fractions of true/false positive amounts.
-batch_df["tpr"] = batch_df["tp"] / (batch_df["tp"] + batch_df["fn"])
-batch_df["fpr"] = batch_df["fp"] / (batch_df["fp"] + batch_df["tn"])
-
 # Check the best combination of eps and min samples.
-heat_df = batch_df.pivot('eps', 'min_samples', 'tpr')
-sns.heatmap(heat_df, annot=True, cmap="coolwarm", vmin=0, vmax=1)
-# Nice cmpas https://matplotlib.org/stable/tutorials/colors/colormaps.html: viridis, coolwarm,
+heat_ave_detection = batch_df.pivot('eps', 'min_samples', 'ave_good_detection')
+heat_ave_computation = batch_df.pivot('eps', 'min_samples', 'ave_computation_time')
 
-# Fix eps and min_samples separately and make the ROC curve.
-eps_fix = 8
-min_samples_fix = 10
-
-eps_fixed_df = batch_df[batch_df['eps'] == eps_fix]
+# Plot it.
 plt.figure()
-plt.plot(eps_fixed_df['fpr'], eps_fixed_df['tpr'], 'x')
-plt.xlabel('1 - specificity')
-plt.ylabel('Sensitivity')
-plt.show()
+sns.heatmap(heat_ave_detection, annot=True, cmap="coolwarm", vmin=0, vmax=1)
+plt.title('Average successful closest gate detection')
+
+plt.figure()
+sns.heatmap(heat_ave_computation, annot=True, cmap="coolwarm_r")
+plt.title('Average computation time')
