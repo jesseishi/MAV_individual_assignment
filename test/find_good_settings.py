@@ -6,7 +6,7 @@ import pandas as pd
 import os
 import seaborn as sns
 
-# Load data.
+# Load data from the batch runner.
 results_folder = os.path.abspath(os.path.join(os.curdir, '..', 'results'))
 batch_df = pd.read_csv(os.path.join(results_folder, 'batch.csv'), index_col=0)
 
