@@ -1,5 +1,4 @@
 # With this file a lot of images may be processed with varying parameters.
-# From the results ROC curves may be constructed.
 
 # Imports.
 import cv2
@@ -19,22 +18,23 @@ df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
 # Initialise the output dataframe for this entire batch.
 results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates",
                                       "total_computation_time", "total_good_detection",
-                                      "ave_computation_time", "ave_good_detection",
-                                      "masks_flat", "masks_hat_flat"])
+                                      "ave_computation_time", "ave_good_detection"])
 
 
 # For more accurate timing of the gate detector we can increase this number so it runs it multiple times on the same
 # image.
 n_repeat_detections = 0
 
-# Select which images we want to look at.
-max_images = 50
-unique_image_names = np.unique(df_coords["im_name"])[:max_images]
+# Select which images we want to look at, there are 308 in total.
+start_images = 0
+stop_images = 50
+unique_image_names = np.unique(df_coords["im_name"])[start_images:stop_images]
 
 # Loop through different settings.
 run_i = 0
-for eps in range(8, 21, 3):
-    for min_samples in range(10, 21, 3):
+t0 = time.time()
+for eps in range(8, 19, 2):
+    for min_samples in range(10, 21, 2):
         print('run #{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
 
         # Define parameters and set up the gate detector and gate detector tester.
@@ -46,8 +46,7 @@ for eps in range(8, 21, 3):
         test_gate_detector = TestGateDetector(**test_gate_detector_params)
 
         # Initialize the output dataframe for these settings, that will store the results per image.
-        results_im = pd.DataFrame(columns=["im_name", "n_image", "n_gates", "computation_time", "good_detection",
-                                           "mask_flat", "mask_hat_flat"])
+        results_im = pd.DataFrame(columns=["im_name", "n_image", "n_gates", "computation_time", "good_detection"])
 
         # Loop through all the images.
         # Some images have multiple gates, in which case it has multiple rows. So we loop through the unique image
@@ -91,13 +90,22 @@ for eps in range(8, 21, 3):
 
                 results_im = results_im.append({"im_name": im_name, "n_image": 1, "n_gates": n_gates_in_this_image,
                                                 "computation_time": computation_time,
-                                                "good_detection": found_good_match,
-                                                "mask_flat": None, "mask_hat_flat": None},
+                                                "good_detection": found_good_match},
                                                ignore_index=True)
 
             except Exception as e:
+
+                # Print out the error.
                 print('{}, eps: {}, min_sample: {}'.format(im_name, eps, min_samples))
                 print(e)
+
+                # Add to the results anyway, then we can see on which scripts it didn't work.
+                # Below, when we compute the average computation time, this won't be affected. While the average
+                # detection rate will be affected.
+                results_im = results_im.append({"im_name": im_name, "n_image": 1, "n_gates": np.nan,
+                                                "computation_time": np.nan,
+                                                "good_detection": False},
+                                               ignore_index=True)
             finally:
                 pass
 
@@ -112,11 +120,13 @@ for eps in range(8, 21, 3):
                                               "total_computation_time": results_im["computation_time"].sum(),
                                               "total_good_detection": results_im["good_detection"].sum(),
                                               "ave_computation_time": results_im["computation_time"].mean(),
-                                              "ave_good_detection": results_im["good_detection"].mean(),
-                                              "masks_flat": None,
-                                              "masks_hat_flat": None},
+                                              "ave_good_detection": results_im["good_detection"].mean()},
                                              ignore_index=True)
         run_i += 1
 
 # Store the results of this batch.
 results_batch.to_csv(os.path.join('../', 'results', 'batch.csv'))
+
+# Report on the total time spent.
+t1 = time.time()
+print("Batch processed took {} seconds".format(t1-t0))

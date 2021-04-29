@@ -8,7 +8,7 @@ from itertools import combinations
 # The final class. Takes an image and tries to find the coordinates of the corners of the gate.
 # TODO: Some explanation on how it works.
 class GateDetector:
-    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.275):
+    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.25):
 
         # We use the ORB detector.
         self.orb = cv2.ORB_create(**detector_params)
@@ -74,7 +74,7 @@ class GateDetector:
         for i, (a, b, c, d) in enumerate(combinations(coordinates, 4)):
             clusters_fit.append([self._calc_rectangle_fit(a, b, c, d), [a, b, c, d]])
 
-        # Sort the fits by score.
+        # Sort the fits by score from low to high.
         clusters_fit.sort(key=lambda x: x[0])
 
         # We now want to sort the coordinates by going from the top-left and the clockwise.
@@ -85,8 +85,14 @@ class GateDetector:
         br_arg = np.array([np.linalg.norm(np.array([shape[0], shape[1]]) - coord) for coord in best_coordinates]).argmin()
         bl_arg = np.array([np.linalg.norm(np.array([0, shape[1]]) - coord) for coord in best_coordinates]).argmin()
 
-        sorted_coordinates = np.array([best_coordinates[tl_arg], best_coordinates[tr_arg],
-                                       best_coordinates[br_arg], best_coordinates[bl_arg]])
+        # If two xx_args are the same, this set of coordinates is quite rotated and we can't find the correct order.
+        # So then just return them in random order.
+        # TODO: This also means that this rectangle is quite rotated and is thus a bad fit so we could ignore it.
+        if len(np.unique([tl_arg, tr_arg, br_arg, bl_arg])) < 4:
+            sorted_coordinates = np.asarray(best_coordinates)
+        else:
+            sorted_coordinates = np.array([best_coordinates[tl_arg], best_coordinates[tr_arg],
+                                           best_coordinates[br_arg], best_coordinates[bl_arg]])
 
         # Return the highest score and the four best coordinates.
         return clusters_fit[-1][0], sorted_coordinates
@@ -133,13 +139,13 @@ class GateDetector:
         std_two_longest = np.std(lengths_between_vertices[-2:]) / np.average(lengths_between_vertices[-2:])
         ratio_long_short = np.average(lengths_between_vertices[-2:]) / np.average(lengths_between_vertices[:4])
 
-        return -std_four_shortest - std_two_longest - rms_45 - rms_90
+        # Score between 0 and 1.
+        return np.max(1 - std_four_shortest - std_two_longest - rms_45 - rms_90, 0)
 
     def _estimate_mask(self, score, coords, shape):
 
         # Start with an empty mask and x and y coordinates where we thing the gate is.
         mask = np.zeros(shape)
-        gate_coords = np.empty((0, 2), dtype=int)
 
         # Keep track of all lengths to estimate the width of the gate.
         lengths = np.zeros(len(coords))
@@ -176,8 +182,10 @@ class GateDetector:
         for offset in range(-halve_width, halve_width):
             if offset == 0:
                 continue
-            mask[np.roll(rectangle_coords, offset, axis=0)] = score
-            mask[np.roll(rectangle_coords, offset, axis=1)] = score
+
+            # Decrease the score slightly on larger offsets. This creates a nice ROC curve.
+            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), offset, axis=1)] = score #* 1/(np.abs(offset)**0.1)
+            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), -offset, axis=1)] = score# * 1/(np.abs(offset)**0.1)
 
         # Return the transpose because in the image the rows are on the y axis.
         return mask.transpose()

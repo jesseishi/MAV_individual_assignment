@@ -64,6 +64,6 @@ plt.legend()
 plt.show()
 
 plt.figure()
-plt.imshow(mask_hat, 'Blues_r', alpha=0.5)
+plt.imshow(mask_hat, 'Blues', alpha=0.5)
 plt.imshow(mask, 'Reds', alpha=0.5)
 plt.show()
