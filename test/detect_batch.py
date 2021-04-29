@@ -23,18 +23,18 @@ results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates
 
 # For more accurate timing of the gate detector we can increase this number so it runs it multiple times on the same
 # image.
-n_repeat_detections = 0
+n_repeat_detections = 4
 
 # Select which images we want to look at, there are 308 in total.
 start_images = 0
-stop_images = 50
+stop_images = 154
 unique_image_names = np.unique(df_coords["im_name"])[start_images:stop_images]
 
 # Loop through different settings.
 run_i = 0
 t0 = time.time()
-for eps in range(8, 19, 2):
-    for min_samples in range(10, 21, 2):
+for eps in range(8, 19, 1):
+    for min_samples in range(10, 23, 1):
         print('run #{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
 
         # Define parameters and set up the gate detector and gate detector tester.

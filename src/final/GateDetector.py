@@ -140,7 +140,7 @@ class GateDetector:
         ratio_long_short = np.average(lengths_between_vertices[-2:]) / np.average(lengths_between_vertices[:4])
 
         # Score between 0 and 1.
-        return np.max(1 - std_four_shortest - std_two_longest - rms_45 - rms_90, 0)
+        return np.maximum(1. - std_four_shortest - std_two_longest - rms_45 - rms_90, 0.)
 
     def _estimate_mask(self, score, coords, shape):
 
@@ -184,8 +184,8 @@ class GateDetector:
                 continue
 
             # Decrease the score slightly on larger offsets. This creates a nice ROC curve.
-            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), offset, axis=1)] = score #* 1/(np.abs(offset)**0.1)
-            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), -offset, axis=1)] = score# * 1/(np.abs(offset)**0.1)
+            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), offset,  axis=1)] = score# * 1/(np.abs(offset)**0.5)
+            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), -offset, axis=1)] = score# * 1/(np.abs(offset)**0.5)
 
         # Return the transpose because in the image the rows are on the y axis.
         return mask.transpose()

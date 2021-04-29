@@ -20,7 +20,7 @@ def get_ROC_curve(predictions, classes):
 
     # For each threshold that was used we check how many TP and FP we would have gotten.
     for prediction in np.unique(predictions):
-        print(prediction)
+    # for prediction in np.arange(0, 1, 0.01):
 
         tps = np.append(tps, np.sum((predictions >= prediction) & positives) / n_positives)
         fps = np.append(fps, np.sum((predictions >= prediction) & negatives) / n_negatives)
