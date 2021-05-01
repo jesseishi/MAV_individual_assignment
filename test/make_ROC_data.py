@@ -16,13 +16,13 @@ df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
 
 # Select which images we want to look at, there are 308 in total.
 start_images = 0
-stop_images = 20
+stop_images = 50
 unique_image_names = np.unique(df_coords["im_name"])[start_images:stop_images]
 
 # Define parameters and set up the gate detector and gate detector tester.
 orb_params = {"edgeThreshold": 0}
-dbscan_params = {"eps": 13, "min_samples": 19}
-test_gate_detector_params = {"max_coordinate_error": 100}
+dbscan_params = {"eps": 13, "min_samples": 18}
+test_gate_detector_params = {"max_coordinate_error": 75}
 
 gate_detector = GateDetector(orb_params, dbscan_params)
 test_gate_detector = TestGateDetector(**test_gate_detector_params)

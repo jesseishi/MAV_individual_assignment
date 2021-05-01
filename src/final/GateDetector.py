@@ -8,7 +8,7 @@ from itertools import combinations
 # The final class. Takes an image and tries to find the coordinates of the corners of the gate.
 # TODO: Some explanation on how it works.
 class GateDetector:
-    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.25):
+    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.5):
 
         # We use the ORB detector.
         self.orb = cv2.ORB_create(**detector_params)
@@ -44,7 +44,6 @@ class GateDetector:
     def _get_keypoint_coordinates(self, im):
         # Detect features.
         kps = self.orb.detect(im, None)
-        kps, des = self.orb.compute(im, kps)  # TODO: Does this line change the kps?
 
         # Get the coordinates out of the keypoint objects and return them.
         return np.array([[*kp.pt] for kp in kps])
@@ -55,7 +54,8 @@ class GateDetector:
         self.y_hat = self.dbscan.fit_predict(X)
 
         # For each unique cluster, get the coordinates of the centroid.
-        clusters = np.unique(self.y_hat)
+        # Don't take the first cluster since this is the noise cluster. TODO: Is this true?
+        clusters = np.unique(self.y_hat)[1:]
         clusters_coordinates = np.zeros((len(clusters), 2))
 
         for cluster in clusters:
@@ -116,10 +116,10 @@ class GateDetector:
         #
         angles.sort()
 
-        # 9 of angles should be +/- 45 and the 3 should be +/- 90 deg.
+        # 8 of angles should be +/- 45 and the 4 should be +/- 90 deg.
         # So we calculate the root mean square after subtracting 45 and 90 degrees.
-        rms_45 = np.sqrt(np.mean(angles[:9] - np.deg2rad(45)) ** 2)
-        rms_90 = np.sqrt(np.mean(angles[9:] - np.deg2rad(90)) ** 2)
+        rms_45 = np.sqrt(np.mean(angles[:8] - np.deg2rad(45)) ** 2)
+        rms_90 = np.sqrt(np.mean(angles[8:] - np.deg2rad(90)) ** 2)
 
         # A good score has low rms values.
         # return -rms_45 - rms_90

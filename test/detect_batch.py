@@ -18,40 +18,45 @@ df_coords = pd.read_csv(os.path.join(data_folder, 'corners.csv'),
 # Initialise the output dataframe for this entire batch.
 results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates",
                                       "total_computation_time", "total_good_detection",
-                                      "ave_computation_time", "ave_good_detection"])
+                                      "ave_computation_time", "ave_good_detection", "ave_error"])
 
 
 # For more accurate timing of the gate detector we can increase this number so it runs it multiple times on the same
 # image.
-n_repeat_detections = 4
+n_repeat_detections = 0
 
 # Select which images we want to look at, there are 308 in total.
 start_images = 0
 stop_images = 154
-unique_image_names = np.unique(df_coords["im_name"])[start_images:stop_images]
+
+# We want the data to be split in the right order so that we can see if our training really extrapolates.
+unique_image_names = np.unique(df_coords["im_name"]).tolist()
+unique_image_names.sort(key=lambda x: int(x[x.find('_')+1:x.find('.')]))
+im_names = unique_image_names[start_images:stop_images]
 
 # Loop through different settings.
 run_i = 0
 t0 = time.time()
 for eps in range(8, 19, 1):
-    for min_samples in range(10, 23, 1):
+    for min_samples in range(14, 25, 1):
         print('run #{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
 
         # Define parameters and set up the gate detector and gate detector tester.
         orb_params = {"edgeThreshold": 0}
         dbscan_params = {"eps": eps, "min_samples": min_samples}
-        test_gate_detector_params = {"max_coordinate_error": 100}
+        test_gate_detector_params = {"max_coordinate_error": 75}
 
         gate_detector = GateDetector(orb_params, dbscan_params)
         test_gate_detector = TestGateDetector(**test_gate_detector_params)
 
         # Initialize the output dataframe for these settings, that will store the results per image.
-        results_im = pd.DataFrame(columns=["im_name", "n_image", "n_gates", "computation_time", "good_detection"])
+        results_im = pd.DataFrame(columns=["im_name", "n_image", "n_gates", "computation_time", "good_detection",
+                                           "error", "closest_gate_size"])
 
         # Loop through all the images.
         # Some images have multiple gates, in which case it has multiple rows. So we loop through the unique image
         # names, and then loop through the possible gate locations.
-        for im_name in unique_image_names:
+        for im_name in im_names:
 
             # Load the image.
             im = cv2.imread(os.path.join(data_folder, im_name), 0)
@@ -72,6 +77,8 @@ for eps in range(8, 19, 1):
                 # find a match.
                 found_good_match = False
                 n_gates_in_this_image = 0
+                best_error = np.inf
+                closest_gate_size = 0
                 for _, row in df_coords[df_coords["im_name"] == im_name].iterrows():
                     n_gates_in_this_image += 1
 
@@ -80,9 +87,13 @@ for eps in range(8, 19, 1):
                                             [row["tr_x"], row["tr_y"]],
                                             [row["br_x"], row["br_y"]],
                                             [row["bl_x"], row["bl_y"]]])
+                    gate_circumference = np.sum([np.linalg.norm(real_coords[i-1] - real_coords[i]) for i in range(4)])
+                    closest_gate_size = np.maximum(closest_gate_size, gate_circumference)
 
                     # Check if it is a good match.
-                    found_good_match = test_gate_detector.check_coordinates(detect_coords, real_coords)
+                    found_good_match, error = test_gate_detector.check_coordinates(detect_coords, real_coords,
+                                                                                   return_error=True)
+                    best_error = np.minimum(best_error, error)
 
                     # If we found a true positive, we don't need to check the other gates anymore.
                     if found_good_match:
@@ -90,7 +101,8 @@ for eps in range(8, 19, 1):
 
                 results_im = results_im.append({"im_name": im_name, "n_image": 1, "n_gates": n_gates_in_this_image,
                                                 "computation_time": computation_time,
-                                                "good_detection": found_good_match},
+                                                "good_detection":  found_good_match, "error": best_error,
+                                                "closest_gate_size": closest_gate_size},
                                                ignore_index=True)
 
             except Exception as e:
@@ -103,25 +115,24 @@ for eps in range(8, 19, 1):
                 # Below, when we compute the average computation time, this won't be affected. While the average
                 # detection rate will be affected.
                 results_im = results_im.append({"im_name": im_name, "n_image": 1, "n_gates": np.nan,
-                                                "computation_time": np.nan,
-                                                "good_detection": False},
+                                                "computation_time": np.nan, "good_detection": False, "error": np.nan,
+                                                "closest_gate_size": closest_gate_size},
                                                ignore_index=True)
-            finally:
-                pass
 
         # Now that we've looped through all the images, we want to save the results of this run.
         results_im.to_csv(os.path.join('../', 'results', 'eps{}-min_samples{}.csv'.format(eps, min_samples)))
 
         # We also want to add the some metrics of this entire run to our batch results..
-        results_batch = results_batch.append({"eps": eps,
-                                              "min_samples": min_samples,
-                                              "n_images": results_im["n_image"].sum(),
-                                              "total_gates": results_im["n_gates"].sum(),
-                                              "total_computation_time": results_im["computation_time"].sum(),
-                                              "total_good_detection": results_im["good_detection"].sum(),
-                                              "ave_computation_time": results_im["computation_time"].mean(),
-                                              "ave_good_detection": results_im["good_detection"].mean()},
-                                             ignore_index=True)
+        results_batch = results_batch.append(
+            {"eps": eps, "min_samples": min_samples,
+             "n_images": results_im["n_image"].sum(),
+             "total_gates": results_im["n_gates"].sum(),
+             "total_computation_time": results_im["computation_time"].sum(),
+             "total_good_detection": results_im["good_detection"].sum(),
+             "ave_computation_time": results_im["computation_time"].mean(),  # TODO: Should this be median?
+             "ave_good_detection": results_im["good_detection"].mean(),
+             "ave_error": results_im["error"].mean()},
+            ignore_index=True)
         run_i += 1
 
 # Store the results of this batch.

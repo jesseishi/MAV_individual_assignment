@@ -19,8 +19,9 @@ def get_ROC_curve(predictions, classes):
     fps = np.array([])
 
     # For each threshold that was used we check how many TP and FP we would have gotten.
-    for prediction in np.unique(predictions):
-    # for prediction in np.arange(0, 1, 0.01):
+    # for prediction in np.unique(predictions):
+    for prediction in np.arange(0, 1, 0.01):
+        print(prediction)
 
         tps = np.append(tps, np.sum((predictions >= prediction) & positives) / n_positives)
         fps = np.append(fps, np.sum((predictions >= prediction) & negatives) / n_negatives)
@@ -40,7 +41,7 @@ TP, FP = get_ROC_curve(all_masks_hat, all_masks)
 
 # Plot.
 plt.figure()
-plt.plot(FP, TP)
+plt.plot(FP, TP, 'x')
 plt.plot([0, 1], [0, 1], '--')
 plt.xlim([0, 1])
 plt.ylim([0, 1])

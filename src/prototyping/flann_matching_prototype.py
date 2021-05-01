@@ -5,15 +5,15 @@ import os
 
 # img1 = cv2.imread('box.png',0)          # queryImage
 # img1 = cv2.imread('this_is_what_a_corner_looks_like.png', 0)          # queryImage
-img1 = cv2.imread('images/this_is_what_a_gate_looks_like3.png', 0)          # queryImage
+# img1 = cv2.imread('images/this_is_what_a_gate_looks_like3.png', 0)          # queryImage
 # img1 = cv2.imread('blokje2.png', 0)          # queryImage
-# img1 = cv2.imread('img_315_flat.png', 0)  # For some fucking reason doesn't work.
+img1 = cv2.imread('images/img_315_flat.png', 0)  # For some fucking reason doesn't work.
 
 data_folder = os.path.abspath(os.path.join(os.curdir, '../../..', 'WashingtonOBRace'))
-img2 = cv2.imread(os.path.join(data_folder, 'img_28.png'), 0)
+img2 = cv2.imread(os.path.join(data_folder, 'img_57.png'), 0)
 
 # Initiate SIFT detector
-orb = cv2.ORB_create()
+orb = cv2.ORB_create(edgeThreshold=0)
 
 # find the keypoints and descriptors with SIFT
 kp1, des1 = orb.detectAndCompute(img1,None)
@@ -47,10 +47,14 @@ for i,(m,n) in enumerate(matches):
         matchesMask[i]=[1,0]
 
 draw_params = dict(matchColor = (0,255,0),
-                   singlePointColor = (255,0,0),
+                   singlePointColor = (0,0,255),
                    matchesMask = matchesMask,
                    flags = 0)
 
 img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
 
-plt.imshow(img3,),plt.show()
+plt.imshow(img3,)
+plt.xticks([])
+plt.yticks([])
+plt.tight_layout()
+plt.show()

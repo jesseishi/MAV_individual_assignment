@@ -4,17 +4,18 @@ import os
 from src.final.GateDetector import GateDetector
 from src.final.TestGateDetector import TestGateDetector
 from matplotlib import pyplot as plt
+import matplotlib.ticker as ticker
 import pandas as pd
 import numpy as np
 
 
 # Define parameters.
 orb_params = {"edgeThreshold": 0}
-dbscan_params = {"eps": 13, "min_samples": 17}
-test_gate_detector_params = {"max_coordinate_error": 100}
+dbscan_params = {"eps": 13, "min_samples": 18}
+test_gate_detector_params = {"max_coordinate_error": 75}
 
 # Load an image and its coordinates.
-im_number = 184
+im_number = 279
 im_name = 'img_{}.png'.format(im_number)
 mask_name = 'mask_{}.png'.format(im_number)
 data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace'))
@@ -67,3 +68,28 @@ plt.figure()
 plt.imshow(mask_hat, 'Blues', alpha=0.5)
 plt.imshow(mask, 'Reds', alpha=0.5)
 plt.show()
+
+# Plot the whole process.
+fig, axs = plt.subplots(1, 3, figsize=(7, 2))
+axs[0].imshow(im, 'gray')
+axs[1].imshow(im, 'gray')
+axs[2].imshow(im, 'gray')
+
+# Plot the clusters.
+for cluster in np.unique(gate_detector.y_hat):
+
+    # get row indexes for samples with this cluster
+    row_ix = np.where(gate_detector.y_hat == cluster)
+
+    # Create scatter of these samples
+    axs[0].plot(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], 'bx')
+    axs[1].scatter(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], marker='x')
+
+axs[2].plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='green', markersize=15)
+
+for i in range(3):
+    axs[i].set_title('step {}'.format(i+1))
+    axs[i].set_ylim([np.shape(im)[0], 0])
+    axs[i].set_xlim([0, np.shape(im)[1]])
+    axs[i].xaxis.set_major_locator(ticker.NullLocator())
+    axs[i].yaxis.set_major_locator(ticker.NullLocator())
