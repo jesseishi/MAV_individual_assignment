@@ -26,23 +26,23 @@ results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates
 n_repeat_detections = 0
 
 # Select which images we want to look at, there are 308 in total.
-start_images = 0
-stop_images = 154
+start_images = 154
+stop_images = 310
 
 # We want the data to be split in the right order so that we can see if our training really extrapolates.
 unique_image_names = np.unique(df_coords["im_name"]).tolist()
 unique_image_names.sort(key=lambda x: int(x[x.find('_')+1:x.find('.')]))
-im_names = unique_image_names[start_images:stop_images]
+im_names = unique_image_names[1::2]  # TODO: documentation. 0: train, 1: test -> 0 1 0 1 0 1 0 1 0 1 0...
 
 # Loop through different settings.
 run_i = 0
 t0 = time.time()
-dont_repeat_existing_results = True
-for eps in range(8, 29, 1):
-    for min_samples in range(14, 25, 1):
+repeat_existing_results = True
+for eps in [21]:  # range(8, 34, 1):
+    for min_samples in [25]:  # range(14, 35, 1):
 
         # We can save time when we don't repeat existing runs.
-        if dont_repeat_existing_results and os.path.isfile(os.path.join(
+        if not repeat_existing_results and os.path.isfile(os.path.join(
                 '../', 'results', 'eps{}-min_samples{}.csv'.format(eps, min_samples))):
 
             print('loading\t#{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
@@ -120,6 +120,20 @@ for eps in range(8, 29, 1):
                     # Print out the error.
                     print('{}, eps: {}, min_sample: {}'.format(im_name, eps, min_samples))
                     print(e)
+
+                    # We still want to calculate the circumference of the gate correctly.
+                    # TODO: fix code repetition when refactoring this file.
+                    closest_gate_size = 0
+                    for _, row in df_coords[df_coords["im_name"] == im_name].iterrows():
+
+                        # Get the coordinates of this gate from top left and then clockwise.
+                        real_coords = np.array([[row["tl_x"], row["tl_y"]],
+                                                [row["tr_x"], row["tr_y"]],
+                                                [row["br_x"], row["br_y"]],
+                                                [row["bl_x"], row["bl_y"]]])
+                        gate_circumference = np.sum(
+                            [np.linalg.norm(real_coords[i - 1] - real_coords[i]) for i in range(4)])
+                        closest_gate_size = np.maximum(closest_gate_size, gate_circumference)
 
                     # Add to the results anyway, then we can see on which scripts it didn't work.
                     # Below, when we compute the average computation time, this won't be affected. While the average

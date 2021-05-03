@@ -8,7 +8,7 @@ from itertools import combinations
 # The final class. Takes an image and tries to find the coordinates of the corners of the gate.
 # TODO: Some explanation on how it works.
 class GateDetector:
-    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.5):
+    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.27):
 
         # We use the ORB detector.
         self.orb = cv2.ORB_create(**detector_params)
@@ -179,13 +179,16 @@ class GateDetector:
         # Now we have a thin line that we want to make wider.
         halve_width = int(np.rint(np.mean(lengths) / 2 * self.gate_width_over_length_ratio))
         rectangle_coords = (mask == score)
-        for offset in range(-halve_width, halve_width):
-            if offset == 0:
+        for updown in range(-halve_width, halve_width):
+            if updown == 0:
                 continue
 
-            # Decrease the score slightly on larger offsets. This creates a nice ROC curve.
-            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), offset,  axis=1)] = score# * 1/(np.abs(offset)**0.5)
-            mask[np.roll(np.roll(rectangle_coords, offset, axis=0), -offset, axis=1)] = score# * 1/(np.abs(offset)**0.5)
+            for leftright in range(-halve_width, halve_width):
+                if leftright == 0:
+                    continue
+
+                mask[np.roll(np.roll(rectangle_coords, updown, axis=0), leftright,
+                             axis=1)] = score
 
         # Return the transpose because in the image the rows are on the y axis.
         return mask.transpose()

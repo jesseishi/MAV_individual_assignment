@@ -21,7 +21,7 @@ unique_image_names = np.unique(df_coords["im_name"])[start_images:stop_images]
 
 # Define parameters and set up the gate detector and gate detector tester.
 orb_params = {"edgeThreshold": 0}
-dbscan_params = {"eps": 13, "min_samples": 18}
+dbscan_params = {"eps": 21, "min_samples": 25}
 test_gate_detector_params = {"max_coordinate_error": 75}
 
 gate_detector = GateDetector(orb_params, dbscan_params)
@@ -36,7 +36,13 @@ for im_name in unique_image_names:
     im = cv2.imread(os.path.join(data_folder, im_name), 0)
     mask = cv2.imread(os.path.join(data_folder, im_name.replace('img', 'mask')), 0)
 
-    _, mask_hat = gate_detector.detect_gate(im, return_mask=True)
+    try:
+        _, mask_hat = gate_detector.detect_gate(im, return_mask=True)
+
+    # If the code above fails, we return an empty mask, because we detected nothing.
+    except Exception as e:
+        print(e)
+        mask_hat = np.zeros_like(mask)
 
     all_masks = np.append(all_masks, mask.flatten())
     all_masks_hat = np.append(all_masks_hat, mask_hat.flatten())

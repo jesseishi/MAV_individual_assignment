@@ -12,9 +12,9 @@ results_folder = os.path.abspath(os.path.join(os.curdir, '..', 'results'))
 
 # We want to make a heatmap with gate size bins on the y axis, eps on the x axis and the heat is the detection rate.
 df = pd.DataFrame(columns=["setting", "gate_size_bin", "detection_rate"])
-gate_size_bins = np.arange(0, 1001, 100)
-for eps in range(8, 29):
-    min_samples = 18
+gate_size_bins = np.arange(250, 801, 50)
+for eps in range(8, 34):
+    min_samples = 25
 
     df_setting = pd.read_csv(os.path.join(results_folder, 'eps{}-min_samples{}.csv'.format(eps, min_samples)),
                              index_col=0)
@@ -40,4 +40,8 @@ df_detection_rate = df.pivot("gate_size_bin", "eps", "detection_rate")
 df_count = df.pivot("gate_size_bin", "eps", "count")
 
 # Make the plot.
-sns.heatmap(df_detection_rate)
+fig, ax = plt.subplots()
+sns.heatmap(df_detection_rate, ax=ax)
+ax.set_yticklabels(["far away", "", "", "", "", "", "", "", "", "", "close-by", ""])
+ax.set_ylabel('Distance to closest gate')
+ax.set_title('Detection rate [%]')
