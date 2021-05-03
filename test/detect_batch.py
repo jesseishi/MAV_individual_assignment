@@ -37,8 +37,8 @@ im_names = unique_image_names[start_images:stop_images]
 # Loop through different settings.
 run_i = 0
 t0 = time.time()
-for eps in range(8, 19, 1):
-    for min_samples in range(14, 25, 1):
+for eps in range(8, 34, 1):
+    for min_samples in range(14, 35, 1):
         print('run #{}: eps: {}, min_samples: {}'.format(run_i, eps, min_samples))
 
         # Define parameters and set up the gate detector and gate detector tester.

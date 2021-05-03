@@ -1,4 +1,4 @@
-# Make ROC curves.
+# Find good setting of the algorithm.
 
 # Imports.
 import matplotlib.pyplot as plt
@@ -36,8 +36,8 @@ plt.title('Average computation speed [images / s]')
 
 
 # Check the errors of the score we like.
-eps = 13
-min_samples = 18
+eps = 8
+min_samples = 24
 df_settings = pd.read_csv(os.path.join(results_folder, 'eps{}-min_samples{}.csv'.format(eps, min_samples)), index_col=0)
 
 plt.figure()
