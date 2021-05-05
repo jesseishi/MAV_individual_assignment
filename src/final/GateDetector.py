@@ -8,7 +8,7 @@ from itertools import combinations
 # The final class. Takes an image and tries to find the coordinates of the corners of the gate.
 # TODO: Some explanation on how it works.
 class GateDetector:
-    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.27):
+    def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.25):
 
         # We use the ORB detector.
         self.orb = cv2.ORB_create(**detector_params)

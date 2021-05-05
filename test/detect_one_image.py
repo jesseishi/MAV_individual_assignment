@@ -14,8 +14,7 @@ orb_params = {"edgeThreshold": 0}
 dbscan_params = {"eps": 21, "min_samples": 25}
 test_gate_detector_params = {"max_coordinate_error": 75}
 
-# Load an image and its coordinates.
-im_number = 160
+im_number = 8
 im_name = 'img_{}.png'.format(im_number)
 mask_name = 'mask_{}.png'.format(im_number)
 data_folder = os.path.abspath(os.path.join(os.curdir, '../..', 'WashingtonOBRace'))
@@ -58,19 +57,23 @@ for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
     if is_true_positive:
         found_true_positive = True
 
-    plt.plot(real_coords[:, 0], real_coords[:, 1], 'x', markersize=10, label="total error: {}".format(error))
+    plt.plot(real_coords[:, 0], real_coords[:, 1], 'x', markersize=10)#, label="total error: {}".format(error))
 
-plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='k' if found_true_positive else 'red', markersize=20)
+plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='springgreen' if found_true_positive else 'red',
+         markersize=20)
 plt.legend()
 plt.xticks([])
 plt.yticks([])
 plt.tight_layout()
 plt.show()
 
-plt.figure()
-plt.imshow(mask_hat, 'Blues', alpha=0.5)
-plt.imshow(mask, 'Reds', alpha=0.5)
-plt.show()
+# plt.figure()
+# plt.imshow(mask, 'Reds', alpha=1)
+# plt.imshow(mask_hat, 'Blues', alpha=0.5)
+# plt.xticks([])
+# plt.yticks([])
+# plt.tight_layout()
+# plt.show()
 #
 # # Plot the whole process.
 # fig, axs = plt.subplots(1, 3, figsize=(7, 2))

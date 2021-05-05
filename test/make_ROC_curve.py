@@ -20,8 +20,9 @@ def get_ROC_curve(predictions, classes):
 
     # For each threshold that was used we check how many TP and FP we would have gotten.
     # for prediction in np.unique(predictions):
+    prediction_loop = 1 - 1/np.logspace(0.01, 3, 100)
     for prediction in np.arange(0, 1, 0.01):
-        print(prediction)
+        # print(prediction)
 
         tps = np.append(tps, np.sum((predictions >= prediction) & positives) / n_positives)
         fps = np.append(fps, np.sum((predictions >= prediction) & negatives) / n_negatives)
@@ -32,17 +33,22 @@ def get_ROC_curve(predictions, classes):
     return tps[inds], fps[inds]
 
 
-# Load the data.
-all_masks = np.load(os.path.join('../', 'results', 'all_masks.npy'))
-all_masks_hat = np.load(os.path.join('../', 'results', 'all_masks_hat.npy'))
-
-# Generate the points.
-TP, FP = get_ROC_curve(all_masks_hat, all_masks)
-
-# Plot.
 plt.figure()
-plt.plot(FP, TP, 'x')
 plt.plot([0, 1], [0, 1], '--')
 plt.xlim([0, 1])
 plt.ylim([0, 1])
+for gate_width_ratio in [0.1, 0.25, 0.5]:
+    print(gate_width_ratio)
+
+    # Load the data.
+    all_masks = np.load(os.path.join('../', 'results', 'all_masks-{}.npy'.format(gate_width_ratio)))
+    all_masks_hat = np.load(os.path.join('../', 'results', 'all_masks_hat-{}.npy'.format(gate_width_ratio)))
+
+    # Generate the points.
+    TP, FP = get_ROC_curve(all_masks_hat, all_masks)
+
+    # Plot.
+    plt.plot(FP, TP, label='ratio = {}'.format(np.round(gate_width_ratio, 2)))
+
+plt.legend()
 plt.show()
