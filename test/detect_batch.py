@@ -21,25 +21,22 @@ results_batch = pd.DataFrame(columns=["eps", "min_samples", "n_images", "n_gates
                                       "ave_computation_time", "ave_good_detection", "ave_error"])
 
 
-# For more accurate timing of the gate detector we can increase this number so it runs it multiple times on the same
-# image.
+# For more accurate timing of the gate detector we can increase this number so it runs the algorithm multiple times on
+# the same image and average the total time spent.
 n_repeat_detections = 0
 
-# Select which images we want to look at, there are 308 in total.
-start_images = 154
-stop_images = 310
-
-# We want the data to be split in the right order so that we can see if our training really extrapolates.
+# Select the images we want to look at.
 unique_image_names = np.unique(df_coords["im_name"]).tolist()
 unique_image_names.sort(key=lambda x: int(x[x.find('_')+1:x.find('.')]))
-im_names = unique_image_names[1::2]  # TODO: documentation. 0: train, 1: test -> 0 1 0 1 0 1 0 1 0 1 0...
+im_names = unique_image_names[:50]
 
 # Loop through different settings.
 run_i = 0
 t0 = time.time()
-repeat_existing_results = True
-for eps in [21]:  # range(8, 34, 1):
-    for min_samples in [25]:  # range(14, 35, 1):
+repeat_existing_results = True  # This can be set to False if we want to save time by not repeating earlier obtained
+# results.
+for eps in range(8, 34, 1):
+    for min_samples in range(14, 35, 1):
 
         # We can save time when we don't repeat existing runs.
         if not repeat_existing_results and os.path.isfile(os.path.join(
@@ -64,8 +61,6 @@ for eps in [21]:  # range(8, 34, 1):
                                                "error", "closest_gate_size"])
 
             # Loop through all the images.
-            # Some images have multiple gates, in which case it has multiple rows. So we loop through the unique image
-            # names, and then loop through the possible gate locations.
             for im_name in im_names:
 
                 # Load the image.
@@ -83,8 +78,8 @@ for eps in [21]:  # range(8, 34, 1):
                     toc = time.time()
                     computation_time = (toc - tic) / (n_repeat_detections + 1)
 
-                    # The algorithm can only detect one gate, so we should loop through the possibilities to see if we can
-                    # find a match.
+                    # The algorithm can only detect one gate, so we should loop through the possibilities to see if we
+                    # can find a match.
                     found_good_match = False
                     n_gates_in_this_image = 0
                     best_error = np.inf
@@ -154,7 +149,7 @@ for eps in [21]:  # range(8, 34, 1):
              "total_gates": results_im["n_gates"].sum(),
              "total_computation_time": results_im["computation_time"].sum(),
              "total_good_detection": results_im["good_detection"].sum(),
-             "ave_computation_time": results_im["computation_time"].mean(),  # TODO: Should this be median?
+             "ave_computation_time": results_im["computation_time"].mean(),
              "ave_good_detection": results_im["good_detection"].mean(),
              "ave_error": results_im["error"].mean()},
             ignore_index=True)

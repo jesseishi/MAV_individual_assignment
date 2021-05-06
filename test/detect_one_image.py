@@ -14,6 +14,7 @@ orb_params = {"edgeThreshold": 0}
 dbscan_params = {"eps": 21, "min_samples": 25}
 test_gate_detector_params = {"max_coordinate_error": 75}
 
+# Load the image.
 im_number = 8
 im_name = 'img_{}.png'.format(im_number)
 mask_name = 'mask_{}.png'.format(im_number)
@@ -57,7 +58,7 @@ for i, row in df_coords[df_coords["im_name"] == im_name].iterrows():
     if is_true_positive:
         found_true_positive = True
 
-    plt.plot(real_coords[:, 0], real_coords[:, 1], 'x', markersize=10)#, label="total error: {}".format(error))
+    plt.plot(real_coords[:, 0], real_coords[:, 1], 'x', markersize=10, label="total error: {}".format(error))
 
 plt.plot(detect_coords[:, 0], detect_coords[:, 1], 'X', color='springgreen' if found_true_positive else 'red',
          markersize=20)
@@ -67,35 +68,36 @@ plt.yticks([])
 plt.tight_layout()
 plt.show()
 
-# plt.figure()
-# plt.imshow(mask, 'Reds', alpha=1)
-# plt.imshow(mask_hat, 'Blues', alpha=0.5)
-# plt.xticks([])
-# plt.yticks([])
-# plt.tight_layout()
-# plt.show()
-#
-# # Plot the whole process.
-# fig, axs = plt.subplots(1, 3, figsize=(7, 2))
-# axs[0].imshow(im, 'gray')
-# axs[1].imshow(im, 'gray')
-# axs[2].imshow(im, 'gray')
-#
-# # Plot the clusters.
-# for cluster in np.unique(gate_detector.y_hat):
-#
-#     # get row indexes for samples with this cluster
-#     row_ix = np.where(gate_detector.y_hat == cluster)
-#
-#     # Create scatter of these samples
-#     axs[0].plot(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], 'bx')
-#     axs[1].scatter(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], marker='x')
-#
-# axs[2].plot(detect_coords[:, 0], detect_coords[:, 1], 'x', color='green', markersize=15)
-#
-# for i in range(3):
-#     axs[i].set_title('step {}'.format(i+1))
-#     axs[i].set_ylim([np.shape(im)[0], 0])
-#     axs[i].set_xlim([0, np.shape(im)[1]])
-#     axs[i].xaxis.set_major_locator(ticker.NullLocator())
-#     axs[i].yaxis.set_major_locator(ticker.NullLocator())
+# Plot the estimated mask on top of the true mask.
+plt.figure()
+plt.imshow(mask, 'Reds', alpha=1)
+plt.imshow(mask_hat, 'Blues', alpha=0.5)
+plt.xticks([])
+plt.yticks([])
+plt.tight_layout()
+plt.show()
+
+# Plot the three steps of the algorithm..
+fig, axs = plt.subplots(1, 3, figsize=(7, 2))
+axs[0].imshow(im, 'gray')
+axs[1].imshow(im, 'gray')
+axs[2].imshow(im, 'gray')
+
+# Plot the clusters.
+for cluster in np.unique(gate_detector.y_hat):
+
+    # get row indexes for samples with this cluster
+    row_ix = np.where(gate_detector.y_hat == cluster)
+
+    # Create scatter of these samples
+    axs[0].plot(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], 'bx')
+    axs[1].scatter(gate_detector.X[row_ix, 0], gate_detector.X[row_ix, 1], marker='x')
+
+axs[2].plot(detect_coords[:, 0], detect_coords[:, 1], 'x', color='green', markersize=15)
+
+for i in range(3):
+    axs[i].set_title('step {}'.format(i+1))
+    axs[i].set_ylim([np.shape(im)[0], 0])
+    axs[i].set_xlim([0, np.shape(im)[1]])
+    axs[i].xaxis.set_major_locator(ticker.NullLocator())
+    axs[i].yaxis.set_major_locator(ticker.NullLocator())

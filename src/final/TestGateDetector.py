@@ -2,8 +2,8 @@
 import numpy as np
 
 
-# This class takes a GateDetector and compares its output to the true coordinates of the corners and mask.
-# So we can check if it detected it correctly.
+# This class takes the results of the GateDetector and compares its output to the true coordinates of the corners and
+# mask. So we can check if it detected it correctly.
 class TestGateDetector:
     def __init__(self, max_coordinate_error):
         self.max_coordinate_error = max_coordinate_error

@@ -18,9 +18,10 @@ def get_ROC_curve(predictions, classes):
     tps = np.array([])
     fps = np.array([])
 
-    # For each threshold that was used we check how many TP and FP we would have gotten.
+    # # For each threshold that was used we check how many TP and FP we would have gotten.
     # for prediction in np.unique(predictions):
-    prediction_loop = 1 - 1/np.logspace(0.01, 3, 100)
+    # Instead of going through each threshold it is much more efficient to go through 100 possible ones and then make
+    # the plot. This works just as well with a lot of datapoints.
     for prediction in np.arange(0, 1, 0.01):
         # print(prediction)
 
@@ -33,10 +34,13 @@ def get_ROC_curve(predictions, classes):
     return tps[inds], fps[inds]
 
 
+# Plot it.
 plt.figure()
 plt.plot([0, 1], [0, 1], '--')
 plt.xlim([0, 1])
 plt.ylim([0, 1])
+
+# Make the ROC curves for different settings of gate_width_ratios.
 for gate_width_ratio in [0.1, 0.25, 0.5]:
     print(gate_width_ratio)
 

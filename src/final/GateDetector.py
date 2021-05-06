@@ -5,8 +5,7 @@ from sklearn.cluster import DBSCAN
 from itertools import combinations
 
 
-# The final class. Takes an image and tries to find the coordinates of the corners of the gate.
-# TODO: Some explanation on how it works.
+# The GateDetector class contains the entire algorithm to detect gates using feature clustering.
 class GateDetector:
     def __init__(self, detector_params, cluster_model_params, gate_width_over_length_ratio=0.25):
 
@@ -22,7 +21,7 @@ class GateDetector:
     # Main function that returns the coordinates of the corners of the gate in the image.
     def detect_gate(self, im, return_mask=False):
 
-        # Get the coordinates of the keypoints.
+        # Get the coordinates of all the keypoints.
         self.X = self._get_keypoint_coordinates(im)
 
         # Cluster the features using a clustering algorithm and find the centroids of these clusters.
@@ -31,12 +30,9 @@ class GateDetector:
         # Find the best fitting rectangle out of all combinations of cluster coordinates.
         best_score, best_coordinates = self._fit_rectangle(cluster_coordinates, np.shape(im))
 
+        # Sometimes we also want to estimate the mask of the gate.
         if return_mask:
-            # Estimate the mask of the gate.
             mask_hat = self._estimate_mask(best_score, best_coordinates, np.shape(im))
-
-            # Return the coordinates of the four corners.
-            # Note that they may be in random order.
             return best_coordinates, mask_hat
         else:
             return best_coordinates
@@ -53,11 +49,11 @@ class GateDetector:
         # Find the different clusters.
         self.y_hat = self.dbscan.fit_predict(X)
 
-        # For each unique cluster, get the coordinates of the centroid.
-        # Don't take the first cluster since this is the noise cluster. TODO: Is this true?
+        # Get all unique clusters. We can skip the first one since it is the noise cluster.
         clusters = np.unique(self.y_hat)[1:]
         clusters_coordinates = np.zeros((len(clusters), 2))
 
+        # For each unique cluster, get the coordinates of the centroid.
         for cluster in clusters:
 
             # Find which rows of X belong to this cluster and take the average of their coordinates.
@@ -99,8 +95,13 @@ class GateDetector:
 
     def _calc_rectangle_fit(self, v1, v2, v3, v4):
 
+        # Calculating the rectangle fit is done by checking all angles between the vertices and the lengths of the
+        # edges of the square. This isn't an optimised part of the algorithm, but was found to work sufficiently well.
+
+        # Let's start by calculating all the angles.
         angles = np.array([])
         for x, y, z in combinations([v1, v2, v3, v4], 3):
+
             # Calculate the lengths of the edges of this triangle.
             a = np.linalg.norm(y - x)
             b = np.linalg.norm(z - y)
@@ -113,38 +114,34 @@ class GateDetector:
 
             angles = np.append(angles, np.array([alpha, beta, gamma]))
 
-        #
+        # Sort the angles from small to large.
         angles.sort()
 
         # 8 of angles should be +/- 45 and the 4 should be +/- 90 deg.
-        # So we calculate the root mean square after subtracting 45 and 90 degrees.
+        # So we calculate the root mean square after subtracting 45 and 90 degrees to get the spread around the
+        # perfect angles.
         rms_45 = np.sqrt(np.mean(angles[:8] - np.deg2rad(45)) ** 2)
         rms_90 = np.sqrt(np.mean(angles[8:] - np.deg2rad(90)) ** 2)
 
-        # A good score has low rms values.
-        # return -rms_45 - rms_90
-
-        # A simple test would be to check if the four shortest distances between the vertices are the same length.
+        # Let's now look at the lengths of the edges.
         lengths_between_vertices = []
 
         # Loop through all combinations and get the distance between them.
         for a, b in combinations([v1, v2, v3, v4], 2):
             lengths_between_vertices.append(np.linalg.norm(b - a))
 
-        # A good rectangle is when the four shortest edges are about the same length, and when the two longest
-        # (the diagonals) are sqrt(2) longer.
+        # A good rectangle is when the four shortest edges are about the same length and the two longest edges (the
+        # diagonals) are about the same length. So we calculate the standard deviation of these.
         lengths_between_vertices.sort()
-
         std_four_shortest = np.std(lengths_between_vertices[:4]) / np.average(lengths_between_vertices[:4])
         std_two_longest = np.std(lengths_between_vertices[-2:]) / np.average(lengths_between_vertices[-2:])
-        ratio_long_short = np.average(lengths_between_vertices[-2:]) / np.average(lengths_between_vertices[:4])
 
-        # Score between 0 and 1.
+        # Now compose a score between 0 and 1.
         return np.maximum(1. - std_four_shortest - std_two_longest - rms_45 - rms_90, 0.)
 
     def _estimate_mask(self, score, coords, shape):
 
-        # Start with an empty mask and x and y coordinates where we thing the gate is.
+        # Start with an empty mask and x and y coordinates where we think the gate is.
         mask = np.zeros(shape)
 
         # Keep track of all lengths to estimate the width of the gate.
@@ -164,7 +161,8 @@ class GateDetector:
             # Find the points that are on the line between these two coordinates, using a simple linear fit.
             slope = (coords[j, 1] - coords[i, 1]) / (coords[j, 0] - coords[i, 0])
 
-            # If the slope is high, and we draw per x-coordinate, it skips a lot of points.
+            # Loop through the x coordinates and make the linear fit. However, when the slope is high, it is better
+            # to loop through the y coordinates, so we don't skip a lot of in-between points.
             if np.abs(slope) < 1:
                 xs = np.arange(coords[i, 0], coords[j, 0], 1 if coords[i, 0] < coords[j, 0] else -1, dtype=int)
                 ys = np.asarray(slope * (xs - coords[i, 0]) + coords[i, 1], dtype=int)
@@ -177,6 +175,7 @@ class GateDetector:
             mask[xs, ys] = score
 
         # Now we have a thin line that we want to make wider.
+        # So we roll up-down and left-right and make the mask there true as well.
         halve_width = int(np.rint(np.mean(lengths) / 2 * self.gate_width_over_length_ratio))
         rectangle_coords = (mask == score)
         for updown in range(-halve_width, halve_width):
